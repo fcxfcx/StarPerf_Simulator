@@ -9,6 +9,8 @@ Function : This file defines the satellite class satellite, which is the base cl
            the earth's surface, true periapsis angle, etc.
 
 '''
+import random
+
 
 class satellite:
     def __init__(self , nu , orbit , true_satellite):

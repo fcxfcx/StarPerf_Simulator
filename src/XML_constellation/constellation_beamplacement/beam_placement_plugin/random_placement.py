@@ -41,7 +41,6 @@ class Cell:
         self.is_covered = False
 
 
-
 # this function is used to convert the longitude and latitude coordinates of ground GS/POP points/user terminals/
 # satellites into three-dimensional Cartesian coordinates.
 # Parameters:
@@ -51,7 +50,7 @@ class Cell:
 # t : the timeslot number, starting from 1. Among them, when object_type is "GS", this parameter is invalid. When
 #     object_type is "satellite", this parameter represents the t-th timeslot of the satellite.
 # Return value : the x, y, z coordinates of the converted GS, and xyz are all in meters.
-def latilong_to_descartes(transformed_object , object_type , t=None):
+def latilong_to_descartes(transformed_object, object_type, t=None):
     a = 6371000.0
     e2 = 0.00669438002290
     if object_type == "satellite":
@@ -76,8 +75,6 @@ def latilong_to_descartes(transformed_object , object_type , t=None):
         return X, Y, Z
 
 
-
-
 # Function: given a point on land (user, POP or GS, etc.) and the coordinates of a satellite in the three-dimensional
 #           Cartesian system, determine whether the point on land can see the satellite.
 # Parameters:
@@ -89,21 +86,15 @@ def latilong_to_descartes(transformed_object , object_type , t=None):
 #                to the center of the earth respectively, and then calculate the angle between the two vectors. If the
 #                angle is greater than or equal to (90°+minimum_elevation), it means it is visible, otherwise it means
 #                it is invisible.
-def judgePointToSatellite(sat_x , sat_y , sat_z , point_x , point_y , point_z , minimum_elevation):
+def judgePointToSatellite(sat_x, sat_y, sat_z, point_x, point_y, point_z, minimum_elevation):
     A = 1.0 * point_x * (point_x - sat_x) + point_y * (point_y - sat_y) + point_z * (point_z - sat_z)
     B = 1.0 * math.sqrt(point_x * point_x + point_y * point_y + point_z * point_z)
     C = 1.0 * math.sqrt(math.pow(sat_x - point_x, 2) + math.pow(sat_y - point_y, 2) + math.pow(sat_z - point_z, 2))
-    angle = math.degrees(math.acos(A / (B * C))) # calculate angles and convert radians to degrees
+    angle = math.degrees(math.acos(A / (B * C)))  # calculate angles and convert radians to degrees
     if angle < 90 + minimum_elevation or math.fabs(angle - 90 - minimum_elevation) <= 1e-6:
         return False
     else:
         return True
-
-
-
-
-
-
 
 
 # Function: Implement satellite beam random scheduling algorithm
@@ -119,8 +110,8 @@ def judgePointToSatellite(sat_x , sat_y , sat_z , point_x , point_y , point_z , 
 #                 list. Each element in it is a one-dimensional list, representing the set of all covered cells in
 #                 a certain timeslot.
 # Return value 2: Cells, a collection of all cells
-def random_placement(sh , h3_resolution , antenna_count_per_satellite , dT , minimum_elevation):
-    Cells = [] # used to store all cells, each element inside is a Cell class object
+def random_placement(sh, h3_resolution, antenna_count_per_satellite, dT, minimum_elevation):
+    Cells = []  # used to store all cells, each element inside is a Cell class object
     # read all cells with resolution h3_resolution
     with h5py.File('data/h3_cells_id_res0-4.h5', 'r') as file:
         h3_cells = []
@@ -132,7 +123,7 @@ def random_placement(sh , h3_resolution , antenna_count_per_satellite , dT , min
         # class object
         for c in h3_cells:
             center_latitude, center_longitude = h3.cell_to_latlng(c)
-            Cells.append(Cell(h3id = c , center_latitude = center_latitude , center_longitude = center_longitude))
+            Cells.append(Cell(h3id=c, center_latitude=center_latitude, center_longitude=center_longitude))
     # Now, the information of all cells has been stored in the Cells list.
     # Calculate each time slice separately, traverse each orbit and each satellite in the sh layer shell within each
     # time slice, find the cells that each satellite can see, and use a list to list all the cells that each satellite
@@ -160,14 +151,14 @@ def random_placement(sh , h3_resolution , antenna_count_per_satellite , dT , min
                 # traverse the Cells
                 for cell in Cells:
                     # generate a user with the center point of the cell as the position
-                    user = USER.user(longitude = cell.center_longitude, latitude = cell.center_latitude)
+                    user = USER.user(longitude=cell.center_longitude, latitude=cell.center_latitude)
                     # get the three-dimensional Cartesian coordinates of user
-                    user_x,user_y,user_z = latilong_to_descartes(user , "User")
+                    user_x, user_y, user_z = latilong_to_descartes(user, "User")
                     # get the three-dimensional Cartesian coordinates of the satellite satellite at time t
-                    sat_x,sat_y,sat_z = latilong_to_descartes(satellite , "satellite" , t)
+                    sat_x, sat_y, sat_z = latilong_to_descartes(satellite, "satellite", t)
                     # determine whether the satellite and user are visible. If visible, add the current cell to
                     # satellite_visible_cells.
-                    if judgePointToSatellite(sat_x , sat_y , sat_z , user_x,user_y,user_z ,  minimum_elevation):
+                    if judgePointToSatellite(sat_x, sat_y, sat_z, user_x, user_y, user_z, minimum_elevation):
                         satellite_visible_cells.append(cell)
                 # after the current satellite is executed, satellite_visible_cells is added to all_satellites_visible_cells
                 all_satellites_visible_cells.append(satellite_visible_cells)
@@ -203,4 +194,4 @@ def random_placement(sh , h3_resolution , antenna_count_per_satellite , dT , min
             every_cell.is_covered = False
 
     # after execution, the set of cells that can be covered in each timeslot and the set of all Cells are returned.
-    return covered_cells_per_timeslot , Cells
+    return covered_cells_per_timeslot, Cells

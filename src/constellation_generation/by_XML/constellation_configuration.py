@@ -33,17 +33,17 @@ def xml_to_dict(element):
             result[child.tag] = child_data
     return result
 
+
 def read_xml_file(file_path):
     tree = ET.parse(file_path)
     root = tree.getroot()
     return {root.tag: xml_to_dict(root)}
 
 
-
 # Parameters:
 # dT : the timeslot, and the timeslot t is calculated from 1
 # constellation_name : the name of the constellation to be generated, used to read the xml configuration file
-def constellation_configuration(dT , constellation_name):
+def constellation_configuration(dT, constellation_name):
     # the path to the constellation configuration information file .xml file
     xml_file_path = "config/XML_constellation/" + constellation_name + ".xml"
     # read constellation configuration information
@@ -65,18 +65,22 @@ def constellation_configuration(dT , constellation_name):
         # first layer of shells, the shell2 subgroup represents the second layer of shells, etc.
         for count in range(1, number_of_shells + 1, 1):
             position.create_group('shell' + str(count))
-    for count in range(1 , number_of_shells+1 , 1):
-        altitude = int(constellation_configuration_information['constellation']['shell'+str(count)]['altitude'])
-        orbit_cycle = int(constellation_configuration_information['constellation']['shell'+str(count)]['orbit_cycle'])
-        inclination = float(constellation_configuration_information['constellation']['shell'+str(count)]['inclination'])
-        phase_shift = int(constellation_configuration_information['constellation']['shell'+str(count)]['phase_shift'])
-        number_of_orbit = int(constellation_configuration_information['constellation']['shell'+str(count)]['number_of_orbit'])
-        number_of_satellite_per_orbit = int(constellation_configuration_information['constellation']['shell'+str(count)]
-                                            ['number_of_satellite_per_orbit'])
+    for count in range(1, number_of_shells + 1, 1):
+        altitude = int(constellation_configuration_information['constellation']['shell' + str(count)]['altitude'])
+        orbit_cycle = int(constellation_configuration_information['constellation']['shell' + str(count)]['orbit_cycle'])
+        inclination = float(
+            constellation_configuration_information['constellation']['shell' + str(count)]['inclination'])
+        phase_shift = int(constellation_configuration_information['constellation']['shell' + str(count)]['phase_shift'])
+        number_of_orbit = int(
+            constellation_configuration_information['constellation']['shell' + str(count)]['number_of_orbit'])
+        number_of_satellite_per_orbit = int(
+            constellation_configuration_information['constellation']['shell' + str(count)]
+            ['number_of_satellite_per_orbit'])
         shell_name = "shell" + str(count)
         sh = shell.shell(altitude=altitude, number_of_satellites=number_of_orbit * number_of_satellite_per_orbit,
                          number_of_orbits=number_of_orbit, inclination=inclination, orbit_cycle=orbit_cycle,
-                         number_of_satellite_per_orbit=number_of_satellite_per_orbit, phase_shift=phase_shift, shell_name = shell_name)
+                         number_of_satellite_per_orbit=number_of_satellite_per_orbit, phase_shift=phase_shift,
+                         shell_name=shell_name)
         # the basic properties of the sh layer have been configured. Now the track of the sh layer is generated.
         orbit_configuration.orbit_configuration(sh, dT)
         # all orbits and satellites in the sh layer have been configured. Now set the number of each satellite.
@@ -100,23 +104,23 @@ def constellation_configuration(dT , constellation_name):
         shells.append(sh)
         # write the longitude, latitude, altitude and other location information of all satellites in the current
         # shell layer sh into a file and save it
-        for tt in range(1 , (int)(sh.orbit_cycle / dT)+2 , 1):
+        for tt in range(1, (int)(sh.orbit_cycle / dT) + 2, 1):
             # this list is used to store the position information of all satellites in the current shell. It is a
             # two-dimensional list. Each element is a one-dimensional list. Each one-dimensional list contains three
             # elements, which respectively represent the longitude, latitude and altitude of a satellite.
             satellite_position = []
             for orbit in sh.orbits:
                 for sat in orbit.satellites:
-                    satellite_position.append([str(sat.longitude[tt-1]) , str(sat.latitude[tt-1]) , str(sat.altitude[tt-1])])
+                    satellite_position.append(
+                        [str(sat.longitude[tt - 1]), str(sat.latitude[tt - 1]), str(sat.altitude[tt - 1])])
             with h5py.File(file_path, 'a') as file:
                 # access the existing first-level subgroup position group
                 position = file['position']
                 # access the existing secondary subgroup 'shell'+str(count) subgroup
                 current_shell_group = position['shell' + str(count)]
                 # create a new dataset in the current_shell_group subgroup
-                current_shell_group.create_dataset('timeslot' + str(tt) , data = satellite_position)
+                current_shell_group.create_dataset('timeslot' + str(tt), data=satellite_position)
     # all shells, orbits, and satellites have been initialized, and the target constellation is generated and returned.
     target_constellation = CONSTELLATION.constellation(constellation_name=constellation_name, number_of_shells=
-                                number_of_shells, shells=shells)
+    number_of_shells, shells=shells)
     return target_constellation
-
