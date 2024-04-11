@@ -107,10 +107,10 @@ def natural_failure_satellites(constellation , sh , num_of_damaged_satellites , 
     for sh in constellation_copy.shells:
         all_satellites_in_sh = []
         for orbit in sh.orbits:
-            orbit.shell = sh
+            orbit.Shell = sh
             for sat in orbit.satellites:
-                sat.shell = sh
-                sat.orbit = orbit
+                sat.Shell = sh
+                sat.Orbit = orbit
             all_satellites_in_sh  = all_satellites_in_sh + orbit.satellites
         sh.satellites = all_satellites_in_sh
 

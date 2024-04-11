@@ -1,4 +1,4 @@
-class ground_station:
+class GroundStation:
     def __init__(self , longitude, latitude , description = None , frequency=None , antenna_count = None ,
                  uplink_GHz = None , downlink_GHz = None):
         self.longitude = longitude # the longitude of GS

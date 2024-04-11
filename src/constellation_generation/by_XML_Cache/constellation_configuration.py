@@ -65,7 +65,7 @@ def constellation_configuration(dT, constellation_name):
             constellation_configuration_information['constellation']['shell' + str(count)]
             ['number_of_satellite_per_orbit'])
         shell_name = "shell" + str(count)
-        sh = shell.shell(altitude=altitude, number_of_satellites=number_of_orbit * number_of_satellite_per_orbit,
+        sh = shell.Shell(altitude=altitude, number_of_satellites=number_of_orbit * number_of_satellite_per_orbit,
                          number_of_orbits=number_of_orbit, inclination=inclination, orbit_cycle=orbit_cycle,
                          number_of_satellite_per_orbit=number_of_satellite_per_orbit, phase_shift=phase_shift,
                          shell_name=shell_name)
@@ -109,6 +109,6 @@ def constellation_configuration(dT, constellation_name):
                 # create a new dataset in the current_shell_group subgroup
                 current_shell_group.create_dataset('timeslot' + str(tt), data=satellite_position)
     # all shells, orbits, and satellites have been initialized, and the target constellation is generated and returned.
-    target_constellation = CONSTELLATION.constellation(constellation_name=constellation_name, number_of_shells=
+    target_constellation = CONSTELLATION.Constellation(constellation_name=constellation_name, number_of_shells=
     number_of_shells, shells=shells)
     return target_constellation

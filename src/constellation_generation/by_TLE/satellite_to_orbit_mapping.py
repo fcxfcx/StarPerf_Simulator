@@ -48,11 +48,11 @@ def satellite_to_orbit_mapping(shells):
             for sat in sh.satellites:
                 if ra_index > 0:
                     if sat.tle_json["RA_OF_ASC_NODE"] > lower_bound and sat.tle_json["RA_OF_ASC_NODE"] <= upper_bound:
-                        sat.orbit = orbit
+                        sat.Orbit = orbit
                         orbit.satellites.append(sat)
                 if ra_index == 0:
                     if sat.tle_json["RA_OF_ASC_NODE"] >= lower_bound and sat.tle_json["RA_OF_ASC_NODE"] <= upper_bound:
-                        sat.orbit = orbit
+                        sat.Orbit = orbit
                         orbit.satellites.append(sat)
 
             sh.orbits.append(orbit)

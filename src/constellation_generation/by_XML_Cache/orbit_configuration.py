@@ -1,13 +1,3 @@
-'''
-
-Author : yunanhou
-
-Date : 2023/08/26
-
-Function : This script defines the function that generates the tracks. The incoming parameter of the function is a
-           shell object sh, with no return value.
-
-'''
 import math
 from skyfield.api import load, wgs84, EarthSatellite
 from datetime import datetime
@@ -54,7 +44,7 @@ def orbit_configuration(sh , dT):
     num_of_sat = num_of_orbit * sat_per_orbit  # total number of satellites
     F = 1
     for i in range(1 , sh.number_of_orbits+1, 1):
-        orbit = ORBIT.orbit(a=a, ecc=ecc, inc=inc, raan=raan[i - 1], argp = argp)
+        orbit = ORBIT.Orbit(a=a, ecc=ecc, inc=inc, raan=raan[i - 1], argp = argp)
         for j in range(1 , sh.number_of_satellite_per_orbit+1 , 1):
             # generate each satellite here... After generating the satellite, add each satellite to the satellites
             # attribute of the orbit object.
@@ -85,7 +75,7 @@ def orbit_configuration(sh , dT):
             satellite_position['latitude'] = subpoint.latitude.degrees
             satellite_position['longitude'] = subpoint.longitude.degrees
             satellite_position['altitude'] = subpoint.elevation.km
-            satellite = SATELLITE.satellite(nu=nu, orbit=orbit, true_satellite = sat)
+            satellite = SATELLITE.Satellite(nu=nu, orbit=orbit, true_satellite = sat)
             satellite.longitude = list(satellite_position['longitude'].values.tolist())
             satellite.latitude = list(satellite_position['latitude'].values.tolist())
             satellite.altitude = list(satellite_position['altitude'].values.tolist())

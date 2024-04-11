@@ -12,7 +12,7 @@ Function : This file defines the satellite class satellite, which is the base cl
 import random
 
 
-class satellite:
+class Satellite:
     def __init__(self, nu, orbit, true_satellite):
         # longitude (degree), because the satellite is constantly moving, there are many longitudes. Use the list type
         # to store all the longitudes of the satellite.
@@ -40,11 +40,13 @@ class satellite:
         # real satellite object created with sgp4 and skyfield models
         self.true_satellite = true_satellite
         # Max Cache size of this satellite
-        self.cache_max = random.randrange(1, 50, 1)
+        self.cache_max = random.randrange(200, 2000, 20)
         # Cache Content
         self.cache = dict()
         # Temp Cache size of this satellite
         self.cache_size = 0
+        # User request of this satellite
+        self.request = []
 
     def add_cache(self, content):
         if self.cache_size + content.size > self.cache_max:

@@ -45,11 +45,5 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    print("\t\033[31mStarting TLE Constellations Testing...\033[0m")
-    # test the core module functionality of various TLE constellations
-    import samples.TLE_constellation.TLE_constellation_test_cases
-
-    samples.TLE_constellation.TLE_constellation_test_cases.TLE_constellation_test_cases()
-    print("\t\033[31mEND.\033[0m")
+    main()
 

@@ -21,3 +21,13 @@ def LFU(constellation, dT):
         number_of_orbits_in_sh = sh.number_of_orbits
         # in the sh layer shell, the number of satellites contained in each orbit
         number_of_satellites_per_orbit = (int)(number_of_satellites_in_sh / number_of_orbits_in_sh)
+
+        # update cache for each satellite
+        # traverse each orbit layer by layer, orbit_index starts from 1
+        for orbit_index in range(1, number_of_orbits_in_sh + 1, 1):
+            # traverse the satellites in each orbit, satellite_index starts from 1
+            for satellite_index in range(1, number_of_satellites_per_orbit + 1, 1):
+                # get the current satellite object
+                cur_satellite = sh.orbits[orbit_index - 1].satellites[satellite_index - 1]
+                # get the id of the current satellite
+                cur_satellite_id = cur_satellite.id
