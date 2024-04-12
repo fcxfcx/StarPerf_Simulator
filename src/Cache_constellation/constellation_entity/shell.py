@@ -14,3 +14,20 @@ class Shell:
         # a list type object is used to store which orbits are included in the shell of this layer. It stores orbit
         # objects.
         self.orbits = []
+
+    def to_json(self):
+        satellites = []
+        for orbit in self.orbits:
+            for sat in orbit.satellites:
+                satellites.append(sat.to_json())
+        return {
+            "altitude": self.altitude,
+            "number_of_satellites": self.number_of_satellites,
+            "number_of_orbits": self.number_of_orbits,
+            "inclination": self.inclination,
+            "orbit_cycle": self.orbit_cycle,
+            "number_of_satellite_per_orbit": self.number_of_satellite_per_orbit,
+            "phase_shift": self.phase_shift,
+            "shell_name": self.shell_name,
+            "satellites": satellites
+        }

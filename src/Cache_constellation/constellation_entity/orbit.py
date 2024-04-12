@@ -27,3 +27,4 @@ class Orbit:
         )
         # a list type field is used to store satellites in the orbit and stores satellite objects.
         self.satellites = []
+

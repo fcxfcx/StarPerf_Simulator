@@ -41,12 +41,26 @@ class Satellite:
         self.true_satellite = true_satellite
         # Max Cache size of this satellite
         self.cache_max = random.randrange(200, 2000, 20)
-        # Cache Content
-        self.cache = dict()
+        # Cache Content, use list because every time slot has cache
+        self.cache = []
         # Temp Cache size of this satellite
         self.cache_size = 0
-        # User request of this satellite
-        self.request = []
+        # User request of this satellite, use dict because not every time slot has request to this satellite
+        self.requests = {}
+
+    def to_json(self):
+        # orbit is not a necessary info for satellite
+        # shell is more important
+        return {
+            'longitude': self.longitude,
+            'latitude': self.latitude,
+            'altitude': self.altitude,
+            'ISL': self.ISL,
+            'id': self.id,
+            # 'true_satellite': self.true_satellite,
+            'cache_max': self.cache_max,
+            'cache_size': self.cache_size,
+        }
 
     def add_cache(self, content):
         if self.cache_size + content.size > self.cache_max:

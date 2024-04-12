@@ -1,3 +1,4 @@
+import json
 import os
 import h5py
 import src.Cache_constellation.constellation_entity.shell as shell
@@ -29,9 +30,9 @@ def read_xml_file(file_path):
 
 
 # Parameters:
-# dT : the timeslot, and the timeslot t is calculated from 1
+# dT : the timeslot, and the timeslot t is calculated from 0
 # constellation_name : the name of the constellation to be generated, used to read the xml configuration file
-def constellation_configuration(dT, constellation_name):
+def constellation_configuration(dT, constellation_name, renew):
     # the path to the constellation configuration information file .xml file
     xml_file_path = "config/XML_constellation/" + constellation_name + ".xml"
     # read constellation configuration information
@@ -39,20 +40,7 @@ def constellation_configuration(dT, constellation_name):
     # convert string to int type
     number_of_shells = int(constellation_configuration_information['constellation']['number_of_shells'])
     shells = []
-    # determine whether the .h5 file of the delay and satellite position data of the current constellation exists. If
-    # it exists, delete the file and create an empty .h5 file. If it does not exist, directly create an empty .h5 file.
-    file_path = "data/Cache_constellation/" + constellation_name + ".h5"
-    if os.path.exists(file_path):
-        # if the .h5 file exists, delete the file
-        os.remove(file_path)
-    # create new empty .h5 file
-    with h5py.File(file_path, 'w') as file:
-        # create position group
-        position = file.create_group('position')
-        # create multiple shell subgroups within the position group. For example, the shell1 subgroup represents the
-        # first layer of shells, the shell2 subgroup represents the second layer of shells, etc.
-        for count in range(1, number_of_shells + 1, 1):
-            position.create_group('shell' + str(count))
+
     for count in range(1, number_of_shells + 1, 1):
         altitude = int(constellation_configuration_information['constellation']['shell' + str(count)]['altitude'])
         orbit_cycle = int(constellation_configuration_information['constellation']['shell' + str(count)]['orbit_cycle'])
@@ -78,8 +66,7 @@ def constellation_configuration(dT, constellation_name):
         # the total number of tracks contained in the sh layer shell
         number_of_orbits_in_sh = sh.number_of_orbits
         # in the sh layer shell, the number of satellites contained in each orbit
-        number_of_satellites_per_orbit = (int)(
-            number_of_satellites_in_sh / number_of_orbits_in_sh)
+        number_of_satellites_per_orbit = int(number_of_satellites_in_sh / number_of_orbits_in_sh)
         # number each satellite in the sh layer, that is, modify the id attribute of the satellite object
         # traverse each orbit layer by layer, orbit_index starts from 1
         for orbit_index in range(1, number_of_orbits_in_sh + 1, 1):
@@ -90,25 +77,25 @@ def constellation_configuration(dT, constellation_name):
                 satellite.id = (orbit_index - 1) * number_of_satellites_per_orbit + satellite_index
         # add the current shell layer sh to the constellation
         shells.append(sh)
-        # write the longitude, latitude, altitude and other location information of all satellites in the current
-        # shell layer sh into a file and save it
-        for tt in range(1, (int)(sh.orbit_cycle / dT) + 2, 1):
-            # this list is used to store the position information of all satellites in the current shell. It is a
-            # two-dimensional list. Each element is a one-dimensional list. Each one-dimensional list contains three
-            # elements, which respectively represent the longitude, latitude and altitude of a satellite.
-            satellite_position = []
-            for orbit in sh.orbits:
-                for sat in orbit.satellites:
-                    satellite_position.append(
-                        [str(sat.longitude[tt - 1]), str(sat.latitude[tt - 1]), str(sat.altitude[tt - 1])])
-            with h5py.File(file_path, 'a') as file:
-                # access the existing first-level subgroup position group
-                position = file['position']
-                # access the existing secondary subgroup 'shell'+str(count) subgroup
-                current_shell_group = position['shell' + str(count)]
-                # create a new dataset in the current_shell_group subgroup
-                current_shell_group.create_dataset('timeslot' + str(tt), data=satellite_position)
+
+    # save the shells to json
+    json_shells_data = []
+    for sh in shells:
+        json_shells_data.append(sh.to_json())
+
+    json_data = {
+        'constellation_name': constellation_name,
+        'shells': json_shells_data
+    }
+    # determine whether the json file exists. If it exists, delete the file and create an empty json file.
+    # If it does not exist, directly create an empty json file.
+    file_path = "data/Cache_constellation/" + constellation_name + "_constellation.json"
+    if os.path.exists(file_path) and renew:
+        # if the json file exists and needs to be renewed, delete the file
+        os.remove(file_path)
+    with open(file_path, 'w') as file:
+        file.write(json.dumps(json_data))
     # all shells, orbits, and satellites have been initialized, and the target constellation is generated and returned.
     target_constellation = CONSTELLATION.Constellation(constellation_name=constellation_name, number_of_shells=
-    number_of_shells, shells=shells)
+    number_of_shells, shells=shells, dT=dT)
     return target_constellation

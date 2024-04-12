@@ -2,10 +2,10 @@ import importlib
 import os
 
 
-class cache_mode_plugin_manager:
+class Cache_mode_plugin_manager:
     def __init__(self):
         self.plugins = {}
-        package_name = "src.Cache_constellation.constellation_connectivity.connectivity_plugin"
+        package_name = "src.Cache_constellation.constellation_cache.cache_plugin"
         plugins_path = package_name.replace(".", os.path.sep)  # the path where the plug-in is stored
         for plugin_name in os.listdir(plugins_path):
             if plugin_name.endswith(".py"):
@@ -30,7 +30,7 @@ class cache_mode_plugin_manager:
     # Function : execute constellation connection mode
     # Parameters :
     # dT : the time slot
-    def execute_cache_policy(self, constellation, dT):
+    def execute_cache_policy(self, constellation):
         self.clear_cache(constellation)  # clear all existing ISLs
         function = self.plugins[self.current_cache_mode]
-        function(constellation, dT)  # go to execute the corresponding connection mode function
+        function(constellation)  # go to execute the corresponding connection mode function

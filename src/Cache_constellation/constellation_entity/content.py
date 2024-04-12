@@ -13,3 +13,9 @@ class Segment:
     def __init__(self, segment_id, size):
         self.id = segment_id
         self.size = size
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'size': self.size
+        }

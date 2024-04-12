@@ -29,7 +29,7 @@ class Request_mode_plugin_manager:
     # Function : execute constellation connection mode
     # Parameters :
     # dT : the time slot
-    def execute_request_policy(self, constellation, dT):
+    def execute_request_policy(self, constellation):
         self.clear_request(constellation)  # clear all existing ISLs
         function = self.plugins[self.current_request_mode]
-        function(constellation, dT)  # go to execute the corresponding connection mode function
+        function(constellation)  # go to execute the corresponding connection mode function

@@ -1,7 +1,9 @@
-import h5py
+import json
 import random
-from src.Cache_constellation.constellation_entity import user, request
+from src.Cache_constellation.constellation_entity import user, request, content
 import numpy as np
+from math import radians, cos, sin, asin, sqrt
+from tqdm import tqdm
 
 Cities = {
     "New York": (40.7128, -74.0060),
@@ -26,11 +28,11 @@ Cities = {
 }
 
 
-def generate_user_request(video_count, segment_count, timeslot_count):
+def generate_user_request(constellation, timeslot_count):
     # Initialization
     duration = timeslot_count  # Simulation duration
-    videos = video_count  # video count
-    segments = segment_count  # segment count for one video (in random plugin we assume each video has the same count)
+    videos = len(constellation.content.video_set)  # video count
+    segments = 200  # segment count for one video (in random plugin we assume each video has the same count)
     lambda_rate = 50  # Average number of new user arrival rate (per second)
 
     np.random.seed(42)  # want same result every time or not
@@ -46,7 +48,7 @@ def generate_user_request(video_count, segment_count, timeslot_count):
     current_users = {}  # The current viewing user and their status
     user_id = 0
 
-    for second in range(duration):
+    for second in tqdm(range(duration), desc="Generating user request"):
         data_for_second = []
         # handle new user arrival
         for i in range(user_arrivals[second]):
@@ -62,7 +64,10 @@ def generate_user_request(video_count, segment_count, timeslot_count):
         to_delete = []
         for user_id, state in current_users.items():
             if state['remaining_segments'] > 0:
-                data_for_second.append((second, state['user'], state['video'], state['current_segment']))
+                cur_video_id = "v_" + str(state['video'])
+                cur_segment_id = "v_" + str(state['video']) + "_s_" + str(state['current_segment'])
+                cur_segment = constellation.content.video_set[cur_video_id].segment_set[cur_segment_id]
+                data_for_second.append(request.Request(timestamp=second, segment=cur_segment, user=state['user']))
                 state['current_segment'] += 1
                 state['remaining_segments'] -= 1
             if state['remaining_segments'] == 0:
@@ -85,27 +90,67 @@ def create_user():
     return new_user
 
 
-def random_request(constellation, dT):
-    file_path = "data/Cache_constellation/" + constellation.constellation_name + ".h5"
-    with h5py.File(file_path, 'a') as file:
-        # get a list of root-level group names
-        root_group_names = list(file.keys())
-        # if the request group is not in the root-level group of the file, create a new root-level request group.
-        if 'request' not in root_group_names:
-            request_group = file.create_group('request')
+def map_requests_to_satellite(constellation, time_series_data):
+    time_slot_count = len(time_series_data)
+    for t in tqdm(range(time_slot_count), desc="Map Requests to Satellites"):
+        temp_requests = time_series_data[t]
+        for req in temp_requests:
+            req_user = req.user
+            target_satellite = find_nearest_satellite(constellation, req_user, t)
+            # note that requests in satellite is a dict
+            sat_requests = target_satellite.requests
+            if t in sat_requests:
+                target_satellite.requests[t].append(req)
+            else:
+                target_satellite.requests[t] = [req]
 
-    # use the max orbit cycle to calculate how many time slots in this case
-    sh = constellation.shells[-1]
+
+def find_nearest_satellite(constellation, ground_user, t):
+    min_distance, target_sat = -1, None
+    for sh in constellation.shells:
+        for orbit in sh.orbits:
+            for sat in orbit.satellites:
+                temp_distance = distance_between_satellite_and_user(ground_user, sat, t)
+                if temp_distance < min_distance or min_distance == -1:
+                    min_distance = temp_distance
+                    target_sat = sat
+    return target_sat
+
+
+def distance_between_satellite_and_user(ground_user, satellite, t):
+    longitude1 = ground_user.longitude
+    latitude1 = ground_user.latitude
+    longitude2 = satellite.longitude[t]
+    latitude2 = satellite.latitude[t]
+    # convert latitude and longitude to radians
+    longitude1, latitude1, longitude2, latitude2 = map(radians, [float(longitude1), float(latitude1), float(longitude2),
+                                                                 float(latitude2)])
+    dlon = longitude2 - longitude1
+    dlat = latitude2 - latitude1
+    a = sin(dlat / 2) ** 2 + cos(latitude1) * cos(latitude2) * sin(dlon / 2) ** 2
+    distance = 2 * asin(sqrt(a)) * 6371.0 * 1000  # the average radius of the earth is 6371km
+    # convert the result to kilometers with three decimal places.
+    distance = np.round(distance / 1000, 3)
+    return distance
+
+
+def random_request(constellation):
+    # use the min orbit cycle to calculate how many time slots in this case
+    dT = constellation.dT
+    min_orbit = constellation.shells[-1].orbit_cycle
+    for sh in constellation.shells:
+        if sh.orbit_cycle < min_orbit:
+            min_orbit = sh.orbit_cycle
     video_count = len(constellation.content.video_set)
     # in random plugin we assume that each video has the same segment count
     segment_count = 200
-    time_slot_count = int(sh.orbit_cycle / dT)
+    time_slot_count = int(min_orbit / dT)
     # generate request data for each time slot
-    time_series_data = generate_user_request(video_count, segment_count, time_slot_count)
+    time_series_data = generate_user_request(constellation, time_slot_count)
+    map_requests_to_satellite(constellation, time_series_data)
 
-    # save the request for each time slot to h5 file
-    with h5py.File(file_path, 'a') as file:
-        for t in range(1, time_slot_count + 1):
-            # 创建或获取时间槽的数据集
-            request_group = file['request']
-            request_group.create_dataset('timeslot_' + str(t), data=time_series_data[t - 1])
+    # file_path = "data/Cache_constellation/" + constellation.constellation_name + "_requests.json"
+    # json_data = {"Requests": time_series_data}
+    # # save the request for each time slot to h5 file
+    # with open(file_path, 'w') as file:
+    #     file.write(json.dumps(json_data))

@@ -4,3 +4,10 @@ class User:
         self.longitude = longitude  # the longitude of user
         self.latitude = latitude  # the latitude of user
         self.request_list = []    # the request list during one loop
+
+    def to_json(self):
+        return {
+            "user_name": self.user_name,
+            "longitude": self.longitude,
+            "latitude": self.latitude
+        }
