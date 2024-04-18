@@ -1,33 +1,40 @@
-'''
-
-Author : yunanhou
-
-Date : 2023/08/24
-
-Function : This file defines the satellite class satellite, which is the base class for all satellites in this project.
-           Determining the satellite's position in orbit requires parameters such as longitude, latitude, distance from
-           the earth's surface, true periapsis angle, etc.
-
-'''
 import random
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, Text, Float
+
+Base = declarative_base()
 
 
-class Satellite:
+class Satellite(Base):
+    __tablename__ = 'satellite'
+    satellite_id = Column(Integer, primary_key=True)
+    longitude_str = Column(Text)
+    latitude_str = Column(Text)
+    altitude_str = Column(Text)
+    nu = Column(Float)
+    ISL_str = Column(Text)
+    cache_max = Column(Integer)
+    orbit_id = Column(Integer)
+
     def __init__(self, nu, orbit, true_satellite):
         # longitude (degree), because the satellite is constantly moving, there are many longitudes. Use the list type
         # to store all the longitudes of the satellite.
         self.longitude = []
+        self.longitude_str = ""
         # latitude (degree), because the satellite is constantly moving, there are many latitudes. Use the list type
         # to store all the latitudes of the satellite.
         self.latitude = []
+        self.latitude_str = ""
         # altitude (km), because the altitude is constantly moving, there are many altitudes. Use the list type
         # to store all the altitudes of the satellite.
         self.altitude = []
+        self.altitude_str = ""
         # the current orbit of the satellite
         self.orbit = orbit
         # list type attribute, which stores the current satellite and which satellites have established ISL, stores
         # the ISL object
         self.ISL = []
+        self.ISL_str = ""
         # True periapsis angle is a parameter that describes the position of an object in orbit. It represents the
         # angle of the object's position in orbit relative to the perigee. For different times, the value of the true
         # periapsis angle keeps changing as the object moves in its orbit.
@@ -47,40 +54,3 @@ class Satellite:
         self.cache_size = 0
         # User request of this satellite, use dict because not every time slot has request to this satellite
         self.requests = {}
-
-    def to_json(self):
-        # orbit is not a necessary info for satellite
-        # shell is more important
-        return {
-            'longitude': self.longitude,
-            'latitude': self.latitude,
-            'altitude': self.altitude,
-            'ISL': self.ISL,
-            'id': self.id,
-            # 'true_satellite': self.true_satellite,
-            'cache_max': self.cache_max,
-            'cache_size': self.cache_size,
-        }
-
-    def add_cache(self, content):
-        if self.cache_size + content.size > self.cache_max:
-            return False
-        else:
-            self.cache_size += content.size
-            self.cache[content.id] = content
-            return True
-
-    def remove_cache(self, content_id):
-        try:
-            del self.cache[content_id]
-            return True
-        except KeyError as e:
-            print("KeyError: " + str(e))
-            return False
-
-    def get_cache(self, content_id):
-        try:
-            return self.cache[content_id]
-        except KeyError as e:
-            print("KeyError: " + str(e))
-            return None

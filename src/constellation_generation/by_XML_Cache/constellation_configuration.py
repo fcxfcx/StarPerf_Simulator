@@ -1,6 +1,4 @@
-import json
-import os
-import h5py
+from tqdm import tqdm
 import src.Cache_constellation.constellation_entity.shell as shell
 import src.constellation_generation.by_XML_Cache.orbit_configuration as orbit_configuration
 import xml.etree.ElementTree as ET
@@ -32,16 +30,16 @@ def read_xml_file(file_path):
 # Parameters:
 # dT : the timeslot, and the timeslot t is calculated from 0
 # constellation_name : the name of the constellation to be generated, used to read the xml configuration file
-def constellation_configuration(dT, constellation_name, renew):
+def constellation_configuration(dT, constellation_name):
     # the path to the constellation configuration information file .xml file
-    xml_file_path = "config/XML_constellation/" + constellation_name + ".xml"
+    xml_file_path = "config/XML_constellation/StarLink.xml"
     # read constellation configuration information
     constellation_configuration_information = read_xml_file(xml_file_path)
     # convert string to int type
     number_of_shells = int(constellation_configuration_information['constellation']['number_of_shells'])
     shells = []
 
-    for count in range(1, number_of_shells + 1, 1):
+    for count in tqdm(range(1, number_of_shells + 1, 1), desc="Generating Shells"):
         altitude = int(constellation_configuration_information['constellation']['shell' + str(count)]['altitude'])
         orbit_cycle = int(constellation_configuration_information['constellation']['shell' + str(count)]['orbit_cycle'])
         inclination = float(
@@ -78,23 +76,6 @@ def constellation_configuration(dT, constellation_name, renew):
         # add the current shell layer sh to the constellation
         shells.append(sh)
 
-    # save the shells to json
-    json_shells_data = []
-    for sh in shells:
-        json_shells_data.append(sh.to_json())
-
-    json_data = {
-        'constellation_name': constellation_name,
-        'shells': json_shells_data
-    }
-    # determine whether the json file exists. If it exists, delete the file and create an empty json file.
-    # If it does not exist, directly create an empty json file.
-    file_path = "data/Cache_constellation/" + constellation_name + "_constellation.json"
-    if os.path.exists(file_path) and renew:
-        # if the json file exists and needs to be renewed, delete the file
-        os.remove(file_path)
-    with open(file_path, 'w') as file:
-        file.write(json.dumps(json_data))
     # all shells, orbits, and satellites have been initialized, and the target constellation is generated and returned.
     target_constellation = CONSTELLATION.Constellation(constellation_name=constellation_name, number_of_shells=
     number_of_shells, shells=shells, dT=dT)

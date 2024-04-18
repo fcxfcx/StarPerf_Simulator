@@ -2,32 +2,24 @@ import json
 from tqdm import tqdm
 
 
-def LFU(constellation):
-    dT = constellation.dT
+def LFU(constellation, database_manager):
+    time_slot_count = constellation.get_time_slot_count()
     # generate cache data for each shell and each satellite
     shell_tqdm = tqdm(constellation.shells)
     for shell in shell_tqdm:
         shell_tqdm.set_description("Simulating Shell " + str(shell.shell_name) + ":")
-
-        sat_cache_json_data = []
-        time_slot_count = shell.orbit_cycle / dT
         for orbit in shell.orbits:
             for sat in orbit.satellites:
+                sat_id = sat.satellite_id
                 temp_cache = LFUCache(sat.cache_max)
                 cache_list = []
-                request_list = sat.requests
-                # make sure the number of time slot is the same between cache module and request module
-                if len(request_list) != time_slot_count:
-                    print("Error: time slot count is different between cache module and request module for shell"
-                          + shell.shell_name + " and satellite " + sat.id)
-                    return
-                sat_tqdm = tqdm(range(0, time_slot_count + 1))
-                for t in sat_tqdm:
-                    sat_tqdm.set_description("Simulating Satellite " + str(sat.id) + ":")
-                    for request in request_list[t]:
-                        temp_segment = request.segment
-                        temp_cache.put(temp_segment.id, temp_segment)
+                for t in range(0, time_slot_count):
+                    request_t = database_manager.get_request_by_satellite(sat_id, t)
+                    for req in request_t:
+                        size = database_manager.get_segment_size(req.segment_id)
+                        temp_cache.put(req.segment_id, size)
                     cache_list.append(temp_cache.get_cache_contents())
+                # save cache info in satellite
                 sat.cache = cache_list
 
 
@@ -47,15 +39,14 @@ class LFUCache:
         self.increase_freq(key)
         return self.key_to_val[key]
 
-    def put(self, key, segment):
+    def put(self, key, size):
         if self.capacity <= 0:
             return
 
-        size = segment.size  # Assuming segment object has a 'size' attribute
         if key in self.key_to_val:
-            self.current_size -= self.key_to_val[key].size  # Remove old size
+            self.current_size -= self.key_to_val[key] # Remove old size
             self.current_size += size  # Add new size
-            self.key_to_val[key] = segment
+            self.key_to_val[key] = size
             self.increase_freq(key)
             return
 
@@ -63,7 +54,7 @@ class LFUCache:
             self.remove_min_freq_key()
 
         if self.current_size + size <= self.capacity:
-            self.key_to_val[key] = segment
+            self.key_to_val[key] = size
             self.key_to_freq[key] = 1
             self.freq_to_keys.setdefault(1, set()).add(key)
             self.min_freq = 1  # Reset min_freq to 1 for the new key
@@ -93,6 +84,6 @@ class LFUCache:
         if not keys:
             del self.freq_to_keys[self.min_freq]
         # Remove the least frequently used key from key_to_val and key_to_freq
-        removed_segment = self.key_to_val.pop(key)
+        removed_segment_size = self.key_to_val.pop(key)
         del self.key_to_freq[key]
-        self.current_size -= removed_segment.size  # Update current size after removal
+        self.current_size -= removed_segment_size  # Update current size after removal

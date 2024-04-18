@@ -1,13 +1,15 @@
-class User:
-    def __init__(self, longitude, latitude, user_name=None):
-        self.user_name = user_name  # the name of user
-        self.longitude = longitude  # the longitude of user
-        self.latitude = latitude  # the latitude of user
-        self.request_list = []    # the request list during one loop
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String
 
-    def to_json(self):
-        return {
-            "user_name": self.user_name,
-            "longitude": self.longitude,
-            "latitude": self.latitude
-        }
+Base = declarative_base()
+
+
+class User(Base):
+    user_id = Column(Integer, primary_key=True)
+    user_name = Column(String)
+    city_id = Column(Integer)
+
+    def __init__(self, user_name, city_id):
+        self.user_name = user_name  # the name of user
+        self.city_id = city_id
+        self.request_list = []  # the request list during one loop

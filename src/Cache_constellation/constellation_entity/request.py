@@ -1,12 +1,18 @@
-class Request:
-    def __init__(self, timestamp, segment, user):
-        self.timestamp = timestamp
-        self.segment = segment
-        self.user = user
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer
 
-    def to_dict(self):
-        return {
-            'timestamp': self.timestamp,
-            'segment': self.segment.to_json(),
-            'user': self.user.to_json()
-        }
+Base = declarative_base()
+
+
+class Request(Base):
+    __tablename__ = 'request'
+    request_id = Column(Integer, primary_key=True)
+    city_id = Column(Integer)
+    satellite_id = Column(Integer)
+    segment_id = Column(Integer)
+    timeslot = Column(Integer)
+
+    def __init__(self, timeslot, segment_id, city_id):
+        self.timeslot = timeslot
+        self.segment_id = segment_id
+        self.city_id = city_id

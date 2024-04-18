@@ -1,21 +1,26 @@
-class Content:
-    def __init__(self, video_set):
-        self.video_set = video_set
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String
+
+Base = declarative_base()
 
 
-class Video:
-    def __init__(self, video_id, segment_set):
-        self.id = video_id
-        self.segment_set = segment_set
+class Video(Base):
+    __tablename__ = 'video'
+    video_id = Column(Integer, primary_key=True)
+    video_name = Column(String)
+
+    def __init__(self, video_name):
+        self.video_name = video_name
+        self.segment_list = []
 
 
-class Segment:
-    def __init__(self, segment_id, size):
-        self.id = segment_id
+class Segment(Base):
+    __tablename__ = 'segment'
+    segment_id = Column(Integer, primary_key=True)
+    index_in_video = Column(Integer)
+    size = Column(Integer)
+    video_id = Column(Integer)
+
+    def __init__(self, index_in_video, size):
+        self.index_in_video = index_in_video
         self.size = size
-
-    def to_json(self):
-        return {
-            'id': self.id,
-            'size': self.size
-        }
